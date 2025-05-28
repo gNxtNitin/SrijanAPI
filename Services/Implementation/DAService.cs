@@ -15,9 +15,9 @@ namespace Services.Implementation
             _iDAManagementService = iDAManagementService;
         }
 
-        public async Task<ResponseModel> GetDAReportData(DAReportRequest dAReportRequest)
+        public async Task<ResponseModel> GetDAReportData(ReportRequest reportRequest)
         {
-            ResponseModel resp = await _iDAManagementService.GetDAReportData(dAReportRequest);
+            ResponseModel resp = await _iDAManagementService.GetDAReportData(reportRequest);
 
             return resp;
         }

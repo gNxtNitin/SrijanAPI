@@ -15,9 +15,9 @@ namespace Services.Implementation
             _punchingManagementService = punchingManagementService;
         }
 
-        public async Task<ResponseModel> GetPunchingReportData(string userId, bool isTeamData = false)
+        public async Task<ResponseModel> GetPunchingReportData(ReportRequest reportRequest)
         {
-           ResponseModel resp = await _punchingManagementService.GetPunchingReportData(userId, isTeamData);
+           ResponseModel resp = await _punchingManagementService.GetPunchingReportData(reportRequest);
 
            return resp;
         }

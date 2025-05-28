@@ -25,11 +25,6 @@ namespace MobilePortalManagementLibrary.Implementation
                 DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O");
                 DALOR.spArgumentsCollection(arrList, "o_dailyvisitdata", "", "REFCURSOR", "O");
 
-               
-                
-
-
-
                 DataSet ds = new DataSet();
                 var res = DALOR.RunStoredProcedureDsRetError("G_SP_GetDailyVisitReportByRole", arrList, ds);
 

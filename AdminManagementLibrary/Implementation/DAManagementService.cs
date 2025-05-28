@@ -56,24 +56,24 @@ namespace MobilePortalManagementLibrary.Implementation
             return responseModal;
         }
 
-        public async Task<ResponseModel> GetDAReportData(DAReportRequest dAReportRequest)
+        public async Task<ResponseModel> GetDAReportData(ReportRequest reportRequest)
         {
             ResponseModel responseModal = new ResponseModel();
 
             ArrayList arrList = new ArrayList();
             DateTime today = DateTime.Today;
             DateTime monthStartDate = new DateTime(today.Year, today.Month, 1);
-           
-            dAReportRequest.DTRangeFrom = dAReportRequest.DTRangeFrom == DateTime.MinValue ? monthStartDate : dAReportRequest.DTRangeFrom;
-            dAReportRequest.DTRangeTo = dAReportRequest.DTRangeTo == DateTime.MinValue ? today : dAReportRequest.DTRangeTo;
+
+            reportRequest.DTRangeFrom = reportRequest.DTRangeFrom == DateTime.MinValue ? monthStartDate : reportRequest.DTRangeFrom;
+            reportRequest.DTRangeTo = reportRequest.DTRangeTo == DateTime.MinValue ? today : reportRequest.DTRangeTo;
 
             try
             {
 
-                DALOR.spArgumentsCollection(arrList, "p_empId", dAReportRequest.EmpId, "VARCHAR", "I");
-                DALOR.spArgumentsCollection(arrList, "p_isTeam", dAReportRequest.IsTeamData ? "1" : "0", "INT", "I");
-                DALOR.spArgumentsCollection(arrList, "p_dt_from", dAReportRequest.DTRangeFrom.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture) ,"DATE", "I");
-                DALOR.spArgumentsCollection(arrList, "p_dt_to", dAReportRequest.DTRangeTo.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture), "DATE", "I");
+                DALOR.spArgumentsCollection(arrList, "p_empId", reportRequest.EmpId, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_isTeam", reportRequest.IsTeamData ? "1" : "0", "INT", "I");
+                DALOR.spArgumentsCollection(arrList, "p_dt_from", reportRequest.DTRangeFrom.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture) ,"DATE", "I");
+                DALOR.spArgumentsCollection(arrList, "p_dt_to", reportRequest.DTRangeTo.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture), "DATE", "I");
 
 
                 DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");

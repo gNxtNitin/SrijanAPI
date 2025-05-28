@@ -92,31 +92,16 @@ namespace SRIJANWEBAPI.Controllers
             }
         }
 
-        [AllowAnonymous]
-        [HttpGet("GetData")]
-        public async Task<IActionResult> GetData(string cid1, string? cid2)
-        {
-            try
-            {
-
-                ResponseModel response = await _adminService.GetData(cid1, cid2);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                //await _errorLoggingService.LogError(ex, ControllerContext.ActionDescriptor.ControllerName, ControllerContext.ActionDescriptor.ActionName);
-                return StatusCode(500, new { Message = ex.Message, StatusCode = 500 });
-
-            }
-        }
+        
         [HttpGet("GetAllSchool")]
-        public async Task<IActionResult> GetAllSchool()
+        public async Task<IActionResult> GetAllSchool(string cid1)
         {
             try
             {
                 SchoolRequestModel srm = new SchoolRequestModel
                 {
-                    flag = "G"
+                    flag = "G",
+                    EmpId = cid1
                 };
 
 

@@ -13,6 +13,7 @@ using System.Data;
 using Oracle.ManagedDataAccess.Client;
 using NotificationSenderLib.Models;
 using SRIJANWEBAPI.Models;
+using SRIJANWEBAPI.Utility;
 //using Oracle.ManagedDataAccess.Client;
 //using Dapper;
 //using Dapper.Oracle;
@@ -140,7 +141,7 @@ namespace SRIJANWEBAPI.Controllers
             ResponseModel responseModel = new ResponseModel();
             try
             {
-
+                lrm.Password = PasswordConfig.GetMd5Hash(lrm.Password);
                 responseModel = await _userAuthService.Auth3(lrm);
 
                 return Ok(responseModel);

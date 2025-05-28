@@ -1,5 +1,6 @@
 ﻿using CustomerManagementLibrary.Models;
 using MenuManagementLib.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.Implementation;
@@ -7,6 +8,7 @@ using Services.Interfaces;
 
 namespace SRIJANWEBAPI.Controllers
 {
+    [Authorize(Roles = "CUSTOMER")]
     [Route("api/[controller]")]
     [ApiController]
     public class CustomerController : ControllerBase
@@ -16,6 +18,8 @@ namespace SRIJANWEBAPI.Controllers
         {
             _customerService = customerService;
         }
+
+        [AllowAnonymous]
         [HttpGet("GetAllCompany")]
         public async Task<IActionResult> GetAllCompany()
         {

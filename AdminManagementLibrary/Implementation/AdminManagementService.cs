@@ -46,7 +46,7 @@ namespace MobilePortalManagementLibrary.Implementation
                 if (res.Ret > 0 && ds != null && ds.Tables.Count > 0)
                 {
                     //responseModal.data = JsonSerializer.Serialize(ds.Tables[0]);
-                    if (flag == "U")
+                    if (flag == "U" || flag == "R")
                     {
                         List<string> l1 = new List<string>();
                         l1.Add(JsonConvert.SerializeObject(ds.Tables[0]));

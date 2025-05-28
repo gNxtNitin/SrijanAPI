@@ -4,6 +4,7 @@ using MobilePortalManagementLibrary.Models;
 using Newtonsoft.Json;
 using System.Collections;
 using System.Data;
+using System.Globalization;
 
 namespace MobilePortalManagementLibrary.Implementation
 {
@@ -27,6 +28,7 @@ namespace MobilePortalManagementLibrary.Implementation
                 DALOR.spArgumentsCollection(arrList, "p_address", ePunchRequestModel.Address, "VARCHAR", "I");
                 DALOR.spArgumentsCollection(arrList, "p_location", ePunchRequestModel.Location, "VARCHAR", "I");
                 DALOR.spArgumentsCollection(arrList, "p_schoolId", ePunchRequestModel.SchoolId, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_isaddressmatched", ePunchRequestModel.IsAddressMatched ? "1" : "0" , "NUMBER", "I");
                 DALOR.spArgumentsCollection(arrList, "p_fromDate", string.Empty, "VARCHAR", "I");
                 DALOR.spArgumentsCollection(arrList, "p_toDate", string.Empty, "VARCHAR", "I");
                
@@ -51,17 +53,24 @@ namespace MobilePortalManagementLibrary.Implementation
             return responseModal;
         }
 
-        public async Task<ResponseModel> GetPunchingReportData(string userId, bool isTeamData = true)
+        public async Task<ResponseModel> GetPunchingReportData(ReportRequest reportRequest)
         {
             ResponseModel responseModal = new ResponseModel();
 
             ArrayList arrList = new ArrayList();
+            DateTime today = DateTime.Today;
+            DateTime monthStartDate = new DateTime(today.Year, today.Month, 1);
+
+            reportRequest.DTRangeFrom = reportRequest.DTRangeFrom == DateTime.MinValue ? monthStartDate : reportRequest.DTRangeFrom;
+            reportRequest.DTRangeTo = reportRequest.DTRangeTo == DateTime.MinValue ? today : reportRequest.DTRangeTo;
 
             try
             {
 
-                DALOR.spArgumentsCollection(arrList, "p_userId", userId, "VARCHAR", "I");
-                DALOR.spArgumentsCollection(arrList, "p_isTeam", isTeamData ? "1" : "0", "INT", "I");
+                DALOR.spArgumentsCollection(arrList, "p_userId", reportRequest.EmpId, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_isTeam", reportRequest.IsTeamData ? "1" : "0", "INT", "I");
+                DALOR.spArgumentsCollection(arrList, "p_dt_from", reportRequest.DTRangeFrom.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture), "DATE", "I");
+                DALOR.spArgumentsCollection(arrList, "p_dt_to", reportRequest.DTRangeTo.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture), "DATE", "I");
 
                 DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");
                 DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O");
@@ -109,6 +118,7 @@ namespace MobilePortalManagementLibrary.Implementation
                 DALOR.spArgumentsCollection(arrList, "p_address", "", "VARCHAR", "I");
                 DALOR.spArgumentsCollection(arrList, "p_location", "", "VARCHAR", "I");
                 DALOR.spArgumentsCollection(arrList, "p_schoolId", "", "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_isaddressmatched", "0", "NUMBER", "I");
                 DALOR.spArgumentsCollection(arrList, "p_fromDate", string.Empty, "VARCHAR", "I");
                 DALOR.spArgumentsCollection(arrList, "p_toDate", string.Empty, "VARCHAR", "I");
 

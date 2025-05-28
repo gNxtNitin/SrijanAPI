@@ -13,5 +13,6 @@ namespace SRIJANWEBAPI.Models
         public string? Location { get; set; }
         public string? Address { get; set; }
         public IFormFile? EPhoto { get; set; }
+        public bool? IsAddressMatched { get; set; }
     }
 }

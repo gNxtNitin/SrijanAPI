@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
 using MobilePortalManagementLibrary.Models;
 using Services.Interfaces;
@@ -22,11 +23,11 @@ namespace SRIJANWEBAPI.Controllers
         }
 
         [HttpGet("GetPunchingReportData")]
-        public async Task<IActionResult> GetPunchingReportData(string userId, bool isTeamData = false)
+        public async Task<IActionResult> GetPunchingReportData([FromQuery] ReportRequest reportRequest)
         {
             try
             {
-                var response = await _punchingService.GetPunchingReportData(userId, isTeamData);
+                var response = await _punchingService.GetPunchingReportData(reportRequest);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -70,21 +71,17 @@ namespace SRIJANWEBAPI.Controllers
                     var settings = _fileSettings.Value;
                     _ePunchFilesPath = Path.IsPathRooted(settings.EPunchFilesRootPath) ? settings.EPunchFilesRootPath : Path.Combine(Directory.GetCurrentDirectory(), settings.EPunchFilesRootPath);
 
-                    var rootFolder = _ePunchFilesPath;
-                    var dateFolder = DateTime.Now.ToString("yyyy-MM-dd");
-                    var fullFolderPath = Path.Combine(rootFolder, dateFolder);
+                    var rootFolder = Path.Combine(_ePunchFilesPath, ePunchModel.EmpID);
+                    Directory.CreateDirectory(rootFolder);
 
-                  
-                    Directory.CreateDirectory(fullFolderPath);
 
                 
                     var fileExt = Path.GetExtension(ePunchModel.EPhoto.FileName);
                     var fileGuid = Guid.NewGuid().ToString("N");
                     savedFileName = $"{ePunchModel.EmpID}_{fileGuid}{fileExt}";
 
-                    var fullPath = Path.Combine(fullFolderPath, savedFileName);
-
-                  
+                    var fullPath = Path.Combine(rootFolder, savedFileName);
+                    
                     using (var stream = new FileStream(fullPath, FileMode.Create))
                     {
                         await ePunchModel.EPhoto.CopyToAsync(stream);
@@ -101,7 +98,8 @@ namespace SRIJANWEBAPI.Controllers
                     KM = ePunchModel.KM ?? 0,
                     SchoolId = ePunchModel.SchoolId,
                     Location = ePunchModel.Location ?? string.Empty,
-                    Address = ePunchModel.Address ?? string.Empty
+                    Address = ePunchModel.Address ?? string.Empty,
+                    IsAddressMatched = ePunchModel.IsAddressMatched ?? false
                 };
 
                 var response = await _punchingService.AddEpunchRecord(ePunchRequestModel);
@@ -112,6 +110,43 @@ namespace SRIJANWEBAPI.Controllers
             {
                 return StatusCode(500, new { Message = ex.Message, StatusCode = 500 });
             }
+        }
+
+
+        [HttpGet("Ephoto/{fileName}")]
+        public async Task<IActionResult> GetBill(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return BadRequest("File name is required.");
+
+            var settings = _fileSettings.Value;
+
+
+            var sanitizedFileName = Path.GetFileName(fileName);
+            string[] d = fileName.Split("_");
+            string eid = d.Length > 0 ? d[0] : "0";
+           
+            var filePath = Path.Combine(settings.EPunchFilesRootPath, eid, sanitizedFileName);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("File not found.");
+
+
+            var provider = new FileExtensionContentTypeProvider();
+            if (!provider.TryGetContentType(filePath, out var contentType))
+            {
+                contentType = "application/octet-stream";
+            }
+
+            var fileBytes = System.IO.File.ReadAllBytes(filePath);
+            UserFile userFile = new UserFile
+            {
+                FileName = sanitizedFileName,
+                FileBytes = fileBytes,
+                ContentType = contentType
+            };
+
+            return Ok(userFile);
         }
 
     }

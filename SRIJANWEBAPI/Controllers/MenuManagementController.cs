@@ -11,7 +11,7 @@ using Services.Interfaces;
 
 namespace SRIJANWEBAPI.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class MenuManagementController : ControllerBase

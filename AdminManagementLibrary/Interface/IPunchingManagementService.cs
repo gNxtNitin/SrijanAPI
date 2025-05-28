@@ -9,7 +9,7 @@ namespace MobilePortalManagementLibrary.Interface
 {
     public interface IPunchingManagementService
     {
-        Task<ResponseModel> GetPunchingReportData(string userId, bool isTeamData = false);
+        Task<ResponseModel> GetPunchingReportData(ReportRequest reportRequest);
         Task<ResponseModel> AddEpunchRecord(EPunchRequestModel ePunchRequestModel);
 
         Task<ResponseModel> GetAssignedSchool(string empId);

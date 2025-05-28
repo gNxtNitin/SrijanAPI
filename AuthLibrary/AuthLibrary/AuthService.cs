@@ -116,8 +116,9 @@ namespace AuthLibrary
                                     string uId = ds.Tables[0].Rows[0]["USERID"].ToString();
                                     string fname = ds.Tables[0].Rows[0]["FIRSTNAME"].ToString();
                                     string cname = ds.Tables[0].Rows[0]["COMPANY_NAME"].ToString();
-                                    string jwtToken = await GenerateJwtToken(loginReq.MobileOrEmail, uId, loginReq.MobileOrEmail);
-                                    responseModel.data = new { token = jwtToken, userId = uId, name = fname, companyname = cname };
+                                    string userrole = ds.Tables[0].Rows[0]["ROLEID"].ToString();
+                                    string jwtToken = await GenerateJwtToken(loginReq.MobileOrEmail, userrole, loginReq.MobileOrEmail);
+                                    responseModel.data = new { token = jwtToken, userId = uId, name = fname, companyname = cname, role= userrole };
 
 
                                     responseModel.code = 200;
@@ -189,6 +190,7 @@ namespace AuthLibrary
                         DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O", 4000);
                         DALOR.spArgumentsCollection(arrList, "g_ResultSet", "", "REFCURSOR", "O");
                         var res = DALOR.RunStoredProcedureDsRetError("sp_GetAuthenticatedUser3", arrList, ds);
+                        
 
                         if (res.Ret > 0)
                         {
@@ -221,14 +223,14 @@ namespace AuthLibrary
                             {
                                 responseModel.code = -1;
 
-                                responseModel.msg = "Username Or Password Incorrect.";
+                                responseModel.msg = res.ErrorMsg;
                             }
                         }
 
                         else
                         {
                             responseModel.code = -2;
-                            responseModel.msg = "Invalid User";
+                            responseModel.msg = res.ErrorMsg;
                         }
                     }
                     else

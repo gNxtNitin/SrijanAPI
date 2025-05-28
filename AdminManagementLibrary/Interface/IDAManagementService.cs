@@ -9,7 +9,7 @@ namespace MobilePortalManagementLibrary.Interface
 {
     public interface IDAManagementService
     {
-        Task<ResponseModel> GetDAReportData(DAReportRequest dAReportRequest);
+        Task<ResponseModel> GetDAReportData(ReportRequest ReportRequest);
 
         Task<ResponseModel> AddDARecord(DARequestModel dARequestModel);
 

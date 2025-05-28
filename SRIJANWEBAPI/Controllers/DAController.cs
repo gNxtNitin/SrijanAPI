@@ -25,11 +25,11 @@ namespace SRIJANWEBAPI.Controllers
         }
 
         [HttpGet("GetDAReportData")]
-        public async Task<IActionResult> GetDAReportData([FromQuery] DAReportRequest dAReportRequest)
+        public async Task<IActionResult> GetDAReportData([FromQuery] ReportRequest reportRequest)
         {
             try
             {
-                var response = await _dAService.GetDAReportData(dAReportRequest);
+                var response = await _dAService.GetDAReportData(reportRequest);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -38,12 +38,16 @@ namespace SRIJANWEBAPI.Controllers
             }
         }
 
-        [AllowAnonymous]
         [HttpGet("GetKMValueByDateRange")]
         public async Task<IActionResult> GetKMValueByDateRange(string userId, DateTime fromDate, DateTime toDate)
         {
             try
             {
+                if (fromDate > toDate)
+                {
+                    return BadRequest("From date cannot exceed to date");
+                }
+
                 var response = await _dAService.GetKMVaueByDateRange(userId, fromDate, toDate);
                 return Ok(response);
             }
