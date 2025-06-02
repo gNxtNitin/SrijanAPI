@@ -27,7 +27,7 @@ namespace Services.Implementation
 
         public async Task<ResponseModel> AuthenticateUser(AuthRequestModel lrm)
         {
-            var ppp = await Auth2(lrm);
+            var resp = await _authService.AuthenticateUser(lrm);
             //            ResponseModel responseModel = new ResponseModel();
             //            if (lrm.IsResendCode > 0)
             //            {
@@ -77,7 +77,7 @@ namespace Services.Implementation
             //            }
 
             //return responseModel;
-            return ppp;
+            return resp;
         }
 
         public async Task<ResponseModel> ValidateOTP(AuthRequestModel lrm)
@@ -102,18 +102,7 @@ namespace Services.Implementation
             }
             return response;
         }
-        public async Task<ResponseModel> Auth2(AuthRequestModel umr)
-        {
-            ResponseModel responseModel = new ResponseModel();
-            var response = await _authService.AuthenticateUser2(umr);
-            return response;
-        }
-        public async Task<ResponseModel> Auth3(AuthRequestModel umr)
-        {
-            ResponseModel responseModel = new ResponseModel();
-            var response = await _authService.AuthenticateUser3(umr);
-            return response;
-        }
+     
 
         public async Task<ResponseModel> UserInfo(string uId)
         {

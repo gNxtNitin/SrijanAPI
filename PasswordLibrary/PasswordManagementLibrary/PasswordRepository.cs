@@ -18,6 +18,7 @@ using Newtonsoft.Json;
 using ModelsLibrary.Models;
 using PasswordManagementLibrary.Models;
 using LoginReqModel = PasswordManagementLibrary.Models.LoginReqModel;
+using System.Drawing;
 
 namespace PasswordManagementLibrary
 {
@@ -40,7 +41,7 @@ namespace PasswordManagementLibrary
         /// <param name="applicationName"></param>
         /// <returns>A <see cref="ResponseModel"/> indicating the success or failure of the email sending operation.</returns>
         /// 
-        public async Task<ResponseModel> SendForgotPasswordEmail(LoginReqModel req, string userName, string applicationName)
+        public async Task<ResponseModel> SendForgotPasswordEmail(AuthRequestModel req, string userName, string applicationName)
         {
             ResponseModel response = new ResponseModel();
             try
@@ -66,14 +67,14 @@ namespace PasswordManagementLibrary
                     return response;
                 }
 
-                response = await SetOTP(req);
+                // response = await SetOTP(req);
                 if (response.code > 0)
                 {
 
                     // Read the email template
                     //string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
                     //string projectRoot = Directory.GetParent(baseDirectory).Parent.Parent.Parent.Parent.FullName;
-                   
+
                     //string filePath = Path.Combine(projectRoot, "PasswordManagementLibrary", "ResetPassword.txt");
 
                     string emailBody
@@ -136,6 +137,7 @@ namespace PasswordManagementLibrary
             return response;
         }
 
+
         public async Task<ResponseModel> SetOTP(LoginReqModel req)
         {
             Random r = new Random();
@@ -174,7 +176,7 @@ namespace PasswordManagementLibrary
 
 
 
-        public async Task<ResponseModel> ResetPassword(LoginReqModel req)
+        public async Task<ResponseModel> ResetPassword(AuthRequestModel req)
         {
             ResponseModel response = new ResponseModel();
             try
@@ -186,17 +188,25 @@ namespace PasswordManagementLibrary
                 req.Password = await encDcService.Encrypt(req.Password);
 
                 ArrayList arrList = new ArrayList();
-                
-                DAL.spArgumentsCollection(arrList, "@UserId", req.UserId, "INT", "I");
-                
-                DAL.spArgumentsCollection(arrList, "@Password", req.Password, "NVARCHAR", "I");
-                
-                DAL.spArgumentsCollection(arrList, "@Ret", "", "INT", "O");
-                DAL.spArgumentsCollection(arrList, "@ErrorMsg", "", "VARCHAR", "O");
-                var res = DAL.RunStoredProcedureRetError("sp_ResetPassword", arrList);
+                DALOR.spArgumentsCollection(arrList, "p_userid", req.MobileOrEmail, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_password", req.Password, "VARCHAR", "I");
+
+                DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");
+                DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O", 4000);
+
+                var res = DALOR.RunStoredProcedureRetError("G_SP_ResetPassword", arrList);
+
                 response.code = res.Ret;
                 response.msg = res.ErrorMsg;
                 response.data = string.Empty;
+                if (response.code > 0)
+                {
+                    response.msg = "Password reset successfully.";
+                }
+                else
+                {
+                    response.msg = "Failed to reset password.";
+                }
             }
             catch (Exception ex)
             {
@@ -206,7 +216,6 @@ namespace PasswordManagementLibrary
             }
             return await Task.FromResult(response);
         }
-
 
 
 
@@ -367,8 +376,8 @@ namespace PasswordManagementLibrary
         /// token is sent to the user's email in reset password link
         /// <param name="req"></param>
         ///</summary>
-        
-        public async Task<ResponseModel> GeneratePasswordResetToken(LoginReqModel req)
+
+        public async Task<ResponseModel> GeneratePasswordResetToken(AuthRequestModel req)
         {
             ResponseModel response = new ResponseModel();
             try
@@ -381,23 +390,26 @@ namespace PasswordManagementLibrary
                 string token = Guid.NewGuid().ToString();
                 token = await encDcService.Encrypt(token);
 
-                
+
 
                 ArrayList arrList = new ArrayList();
+                DALOR.spArgumentsCollection(arrList, "p_flag", "C", "CHAR", "I", 1);
+                DALOR.spArgumentsCollection(arrList, "p_userid", req.MobileOrEmail, "CHAR", "I", 50);
+                DALOR.spArgumentsCollection(arrList, "p_tokenhash", token, "VARCHAR", "I");
 
-                DAL.spArgumentsCollection(arrList, "@MobileOrEmailId", req.MobileOrEmail ?? "", "NVARCHAR", "I");
-                DAL.spArgumentsCollection(arrList, "@flag", "C", "CHAR", "I");
-                DAL.spArgumentsCollection(arrList, "@TokenHash", token, "NVARCHAR", "I");
-                
-                DAL.spArgumentsCollection(arrList, "@Ret", "", "INT", "O");
-                DAL.spArgumentsCollection(arrList, "@ErrorMsg", "", "VARCHAR", "O");
-                var res = DAL.RunStoredProcedureRetError("sp_SetValidatePasswordResetToken", arrList);
+                DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");
+                DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O", 4000);
+
+                var res = DALOR.RunStoredProcedureRetError("G_SP_SetValidatePasswordResetToken", arrList);
 
                 response.code = res.Ret;
                 response.msg = res.ErrorMsg;
-                string encTokenForUrl = await encDcService.Encrypt(string.Concat(token, "&", res.Ret.ToString()));
+                string encTokenForUrl = await encDcService.Encrypt(string.Concat(token, "&", req.MobileOrEmail));
 
-                response.data = response.code > 0 ? HttpUtility.UrlEncode(encTokenForUrl): string.Empty;
+                response.data = response.code > 0 ? HttpUtility.UrlEncode(encTokenForUrl) : string.Empty;
+
+                response.msg = res.ErrorMsg;
+
             }
 
             catch (Exception ex)
@@ -408,7 +420,6 @@ namespace PasswordManagementLibrary
             return await Task.FromResult(response);
         }
 
-
         public async Task<ResponseModel> ValidateResetPasswordToken(string tokenHash)
         {
             ResponseModel response = new ResponseModel();
@@ -416,12 +427,14 @@ namespace PasswordManagementLibrary
             {
                 ArrayList arrList = new ArrayList();
 
-                
-                DAL.spArgumentsCollection(arrList, "@flag", "V", "CHAR", "I");
-                DAL.spArgumentsCollection(arrList, "@TokenHash", tokenHash, "NVARCHAR", "I");
-                DAL.spArgumentsCollection(arrList, "@Ret", "", "INT", "O");
-                DAL.spArgumentsCollection(arrList, "@ErrorMsg", "", "VARCHAR", "O");
-                var res = DAL.RunStoredProcedureRetError("sp_SetValidatePasswordResetToken", arrList);
+                DALOR.spArgumentsCollection(arrList, "p_flag", "V", "CHAR", "I", 1);
+                DALOR.spArgumentsCollection(arrList, "p_userid", string.Empty, "CHAR", "I", 50);
+                DALOR.spArgumentsCollection(arrList, "p_tokenhash", tokenHash, "VARCHAR", "I");
+
+                DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");
+                DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O");
+
+                var res = DALOR.RunStoredProcedureRetError("G_SP_SetValidatePasswordResetToken", arrList);
 
                 response.code = res.Ret;
                 response.msg = res.Ret > 0 ? "Valid token" : "Invalid token";
@@ -435,6 +448,7 @@ namespace PasswordManagementLibrary
         }
 
 
+
         public async Task<ResponseModel> GetPasswordPolicyValidationRules()
         {
             ResponseModel response = new ResponseModel();
@@ -442,17 +456,23 @@ namespace PasswordManagementLibrary
             {
                 ArrayList arrList = new ArrayList();
 
-                DAL.spArgumentsCollection(arrList, "@Flag", "G", "CHAR", "I");
-                DAL.spArgumentsCollection(arrList, "@Ret", "", "INT", "O");
-                DAL.spArgumentsCollection(arrList, "@ErrorMsg", "", "VARCHAR", "O");
-                DataSet dataSet = new DataSet();
-                DAL.RunStoredProcedure(dataSet, "sp_GetSetPasswordPolicy", arrList);
-                
-                if (dataSet != null && dataSet.Tables.Count > 0)
+
+
+                DALOR.spArgumentsCollection(arrList, "p_result", "", "REFCURSOR", "O");
+                DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");
+                DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O");
+
+                DataSet ds = new DataSet();
+                var res = DALOR.RunStoredProcedureDsRetError("G_SP_GET_PASSWORDPOLICY", arrList, ds);
+
+                response.code = res.Ret;
+                response.msg = res.Ret > 0 ? "Valid token" : "Invalid token";
+
+                if (ds != null && ds.Tables.Count > 0)
                 {
                     response.code = 200;
                     response.msg = "OK";
-                    response.data = JsonConvert.SerializeObject(dataSet);
+                    response.data = JsonConvert.SerializeObject(ds);
                 }
                 else
                 {
@@ -460,8 +480,6 @@ namespace PasswordManagementLibrary
                     response.msg = "Failed to retrieve data";
                     response.data = string.Empty;
                 }
-
-              
             }
             catch (Exception ex)
             {

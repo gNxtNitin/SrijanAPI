@@ -248,15 +248,15 @@ namespace AuthLibrary
             return responseModel;
         }
 
-        public async Task<ResponseModel> AuthenticateUser(AuthRequestModel loginReq)
-        {
+       public async Task<ResponseModel> AuthenticateUser(AuthRequestModel loginReq)
+       {
             ResponseModel responseModel = new ResponseModel();
 
             try
             {
                 if (string.IsNullOrEmpty(loginReq.MobileOrEmail))
                 {
-                    responseModel.msg = "Mobile or email is required.";
+                    responseModel.msg = "UserId is required";
                 }
                 else
                 {
@@ -267,73 +267,63 @@ namespace AuthLibrary
                     //else 
                     if (!string.IsNullOrEmpty(loginReq.Password))
                     {
+                        loginReq.CompanyCode = loginReq.CompanyCode == null ? 0 : loginReq.CompanyCode;
                         loginReq.Password = await encDcService.Encrypt(loginReq.Password);
                         DataSet ds = new DataSet();
                         ArrayList arrList = new ArrayList();
-                        DAL.spArgumentsCollection(arrList, "@MobileOrEmailId", loginReq.MobileOrEmail, "VARCHAR", "I");
+                        DALOR.spArgumentsCollection(arrList, "p_userid", loginReq.MobileOrEmail, "CHAR", "I", 50);
+                        DALOR.spArgumentsCollection(arrList, "p_password", loginReq.Password, "VARCHAR", "I");
+                        DALOR.spArgumentsCollection(arrList, "p_companycode", loginReq.CompanyCode.ToString(), "NUMBER", "I");
 
-                        DAL.spArgumentsCollection(arrList, "@Password", loginReq.Password, "VARCHAR", "I");
-                        DAL.spArgumentsCollection(arrList, "@Ret", "", "INT", "O");
-                        //DAL.spArgumentsCollection(arrList, "@Flag", "F", "CHAR", "I");
-                        DAL.spArgumentsCollection(arrList, "@ErrorMsg", "", "VARCHAR", "O");
+                        DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");
+                        DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O", 4000);
+                        DALOR.spArgumentsCollection(arrList, "p_result", "", "REFCURSOR", "O");
+                        var res = DALOR.RunStoredProcedureDsRetError("G2_SP_GetAuthenticatedUser", arrList, ds);
 
-                        var res = DAL.RunStoredProcedureDsRetError("sp_GetAuthenticatedUser", arrList, ds);
 
-                        if (res.Ret == 200 || res.Ret == 202)
+                        if (res.Ret > 0)
                         {
                             if (ds.Tables.Count > 0)
                             {
-                                if (loginReq.IsLoginWithOtp == true)
-                                {
-                                    return await SetOTP(loginReq);
-                                }
+
                                 if (loginReq.IsJwtToken == true)
                                 {
                                     string userRole = ds.Tables[0].Rows[0]["RoleName"].ToString();
                                     string uId = ds.Tables[0].Rows[0]["UserId"].ToString();
+                                    string employeeId = ds.Tables[0].Rows[0]["UserName"].ToString();
+                                    string fName = ds.Tables[0].Rows[0]["FirstName"].ToString();
+                                    string companyName = ds.Tables[0].Rows[0]["CompanyName"].ToString();
                                     string jwtToken = await GenerateJwtToken(loginReq.MobileOrEmail, userRole, uId);
-                                    responseModel.data = new { token = jwtToken, userId = Convert.ToInt32(uId) };
+                                    responseModel.data = new { token = jwtToken, userId = uId, empId = employeeId, uName = fName, role = userRole, companyname= companyName };
+                                    responseModel.code = res.Ret;
 
-                                    if (res.Ret == 202)
+                                    if (res.Ret == 201)
                                     {
-                                        responseModel.code = res.Ret;
-                                        string days = ds.Tables[0].Rows[0]["ExpireDays"].ToString();
-                                        responseModel.msg = $"Password is about to expire in {days} Day(s). Please reset yout password!";
+                                        responseModel.msg = "Reset Your Password!";
                                     }
                                     else
                                     {
-                                        responseModel.code = 200;
                                         responseModel.msg = "Success";
                                     }
                                 }
-
-                                ManageLoginHistroy(Convert.ToInt32(ds.Tables[0].Rows[0]["UserID"]));
-
                             }
                             else
                             {
                                 responseModel.code = -1;
 
-                                responseModel.msg = "Username Or Password Incorrect.";
+                                responseModel.msg = res.ErrorMsg;
                             }
-                        }
-                        else if (res.Ret == 201)
-                        {
-                            // password expired
-                            responseModel.code = 201;
-                            responseModel.msg = "Password expired";
-                            responseModel.data = ds.Tables[0].Rows[0]["UserId"].ToString();
                         }
                         else
                         {
-                            responseModel.code = -2;
-                            responseModel.msg = "Invalid User";
+                            responseModel.code = -1;
+                            responseModel.msg = res.ErrorMsg;
                         }
                     }
                     else
                     {
                         responseModel.code = -1;
-                        responseModel.msg = "Enter password.";
+                        responseModel.msg = "Invalid password!.";
                     }
                 }
             }

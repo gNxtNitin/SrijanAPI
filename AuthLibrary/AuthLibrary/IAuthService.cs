@@ -15,9 +15,6 @@ namespace AuthLibrary.Interface
         /// including id, message, and JWT token if successful.
         /// </returns>
         public Task<ResponseModel> AuthenticateUser(AuthRequestModel req);
-
-        Task<ResponseModel> AuthenticateUser2(AuthRequestModel loginReq);
-        Task<ResponseModel> AuthenticateUser3(AuthRequestModel loginReq);
         /// <summary>
         /// Sets the One-Time Password (OTP) for user authentication.
         /// </summary>

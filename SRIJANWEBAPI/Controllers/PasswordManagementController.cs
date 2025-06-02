@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using ModelsLibrary.Models;
 using PasswordManagementLibrary.Models;
+using AuthLibrary.Models;
 
 namespace SRIJANWEBAPI.Controllers
 {
@@ -13,21 +14,29 @@ namespace SRIJANWEBAPI.Controllers
     {
         private readonly IErrorLoggingService _errorLoggingService;
         private readonly IPasswordManagementService _passwordManagementService;
-
-        public PasswordManagementController(IErrorLoggingService errorLoggingService, IPasswordManagementService passwordManagementService)
+        private readonly IConfiguration _configuration;
+        public PasswordManagementController(IErrorLoggingService errorLoggingService, IPasswordManagementService passwordManagementService, IConfiguration configuration)
         {
             _errorLoggingService = errorLoggingService;
             _passwordManagementService = passwordManagementService;
+            _configuration = configuration;
         }
 
 
+
         [HttpPost("ForgotPassword")]
-        public async Task<IActionResult> ForgotPassword([FromBody] LoginReqModel lmr)
+        public async Task<IActionResult> ForgotPassword([FromBody] AuthRequestModel authRequest)
         {
             ResponseModel responseModel = new ResponseModel();
             try
             {
-                responseModel = await _passwordManagementService.SendForgotEmail(lmr);
+                string webHostUrl = _configuration.GetValue<string>("SRIJANWebApiSettings:BaseUrl");
+                if (string.IsNullOrEmpty(webHostUrl))
+                {
+                    return BadRequest(new { Message = "Base URL is not configured.", StatusCode = 400 });
+                }
+
+                responseModel = await _passwordManagementService.SendForgotEmail(authRequest, webHostUrl);
                 return Ok(responseModel);
             }
             catch (Exception ex)
@@ -41,12 +50,12 @@ namespace SRIJANWEBAPI.Controllers
 
 
         [HttpPost("ResetPassword")]
-        public async Task<IActionResult> ResetPassword([FromBody] LoginReqModel lmr)
+        public async Task<IActionResult> ResetPassword([FromBody] AuthRequestModel auth)
         {
             ResponseModel responseModel = new ResponseModel();
             try
             {
-                responseModel = await _passwordManagementService.ResetPassword(lmr);
+                responseModel = await _passwordManagementService.ResetPassword(auth);
                 return Ok(responseModel);
             }
             catch (Exception ex)
@@ -75,6 +84,7 @@ namespace SRIJANWEBAPI.Controllers
 
             }
         }
+
 
 
         [HttpGet("GetPasswordValidationRules")]
