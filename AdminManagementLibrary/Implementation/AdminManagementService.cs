@@ -38,7 +38,7 @@ namespace MobilePortalManagementLibrary.Implementation
                 //DALOR.spArgumentsCollection(arrList, "g_ResultSet", "", "REFCURSOR", "O");
 
                 DataSet ds = new DataSet();
-                var res = DALOR.RunStoredProcedureDsRetError("sp_GetData", arrList, ds);
+                var res = DALOR.RunStoredProcedureDsRetError("sp2_GetData", arrList, ds);
 
                 responseModal.code = res.Ret;
                 responseModal.msg = res.ErrorMsg;
@@ -321,7 +321,7 @@ namespace MobilePortalManagementLibrary.Implementation
                     DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");
                     DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O");
                     DALOR.spArgumentsCollection(arrList, "g_ResultSet", "", "REFCURSOR", "O");
-                    var res = DALOR.RunStoredProcedureDsRetError("sp_GetCreateSetDeleteEmployees", arrList);
+                    var res = DALOR.RunStoredProcedureDsRetError("sp2_GetCreateSetDeleteEmployees", arrList);
                     response.code = res.Ret;
                     response.msg = res.ErrorMsg;
                 }
@@ -358,7 +358,7 @@ namespace MobilePortalManagementLibrary.Implementation
                     DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");
                     DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O");
                     DALOR.spArgumentsCollection(arrList, "g_ResultSet", "", "REFCURSOR", "O");
-                    var res = DALOR.RunStoredProcedureDsRetError("sp_GetCreateSetDeleteEmployees", arrList, ds);
+                    var res = DALOR.RunStoredProcedureDsRetError("sp2_GetCreateSetDeleteEmployees", arrList, ds);
                     response.code = res.Ret;
                     response.msg = res.ErrorMsg;
 
