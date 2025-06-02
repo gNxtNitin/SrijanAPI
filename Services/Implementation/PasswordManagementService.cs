@@ -10,7 +10,11 @@ using NotificationSenderLib;
 using System.Web;
 using EmailService.Library;
 using ModelsLibrary.Models;
+using AuthLibrary.Models;
 using PasswordManagementLibrary.Models;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+
 //using UserManagementLibrary.Models;
 
 namespace Services.Implementation
@@ -28,16 +32,38 @@ namespace Services.Implementation
             _emailSerivce = emailSerivce;
         }
 
-        
-        public async Task<ResponseModel> SendForgotEmail(LoginReqModel lrm)
+
+        public async Task<ResponseModel> SendForgotEmail(AuthRequestModel req, string webHostUrl)
         {
 
-            ResponseModel response = await _passwordRepository.GeneratePasswordResetToken(lrm);
+            ResponseModel response = await _passwordRepository.GeneratePasswordResetToken(req);
             bool isSent = false;
+            
             if (response.code > 0)
             {
-                string url = "https://localhost:7227/Auth/ResetPassword";
-               
+                string email = response.msg;
+
+                if (string.IsNullOrEmpty(email) || string.IsNullOrWhiteSpace(email))
+                {
+                    response.code = -404;
+                    response.msg = "Email address Not Found!";
+                    response.data = null;
+                    return response;
+                }
+
+                Regex EmailRegex = new Regex(@"^[A-Za-z0-9]+([._%+-]?[A-Za-z0-9]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$",
+                                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                bool isValid = EmailRegex.IsMatch(email);
+
+                if (!isValid)
+                {
+                    response.code = -400;
+                    response.msg = "Invalid email address";
+                    response.data = null;
+
+                    return response;
+                }
+
                 await _emailSerivce.QueueEmail(new EmailConfiguration(), new EmailDetails()
                 {
                     body = string.Format(@"<html>" +
@@ -49,21 +75,28 @@ namespace Services.Implementation
                         "<p>Stay smart, stay secure!</p>" +
                         "<p>Best regards,<br>Moduler Architect Team</p>" +
                         "</body>" +
-                        "</html>", string.Concat(url, "?authResetToken=", response.data.ToString())),
+                        "</html>", string.Concat(webHostUrl, "/auth/resetpassword?authResetToken=", response.data.ToString())),
 
                     subject = "Password Reset",
-                    ToEmailIds = lrm.MobileOrEmail
+                    ToEmailIds = response.msg
 
                 });
+
+                // object obj = new { token = response.data, toEmail = response.msg };
+                response.data = response.msg;
+                response.msg = "Reset Password Email Sent";
             }
+
+
 
             return response;
 
         }
-
-        public async Task<ResponseModel> ResetPassword(LoginReqModel lrm)
+        public async Task<ResponseModel> ResetPassword(AuthRequestModel lrm)
         {
             ResponseModel responseModel = new ResponseModel();
+            
+
             responseModel = await _passwordRepository.ResetPassword(lrm);
             if (responseModel.code > 0)
             {
@@ -71,14 +104,15 @@ namespace Services.Implementation
                 nsm.UserId = responseModel.code;
                 nsm.Subject = "Password Updated";
                 nsm.Message = string.Format(@"
-<html>
-<body>
-    <p>Dear user,</p>
-    <p>Your Profile Password has been updated successfully.</p>
-    <p>Stay smart, stay secure!</p>
-    <p>Best regards,<br>Moduler Architect Team</p>
-</body>
-</html>");
+                    <html>
+                    <body>
+                        <p>Dear user,</p>
+                        <p>Your Profile Password has been updated successfully.</p>
+                        <p>Stay smart, stay secure!</p>
+                        <p>Best regards,<br>Moduler Architect Team</p>
+                    </body>
+                    </html>");
+
                 var pp = await _notificationSenderService.SendNotificationAsync(nsm);
             }
             return responseModel;

@@ -4,39 +4,106 @@ using System.Net.Mail;
 using System.Net;
 using DatabaseManager;
 using System.Collections;
+using ModelsLibrary.Models;
 
 namespace EmailService.Library
 {
-    public class EmailSerivce: IEmailSerivce
+    public class EmailSerivce : IEmailSerivce
     {
-        MiscDataSetting _miscDataSetting = new MiscDataSetting();
+
         static bool mailSent = false;
         //public async Task QueueEmail(EmailConfiguration emailConfiguration,string toEmailIds, string subject, string body, string token, int isHTML = 1)
         public async Task QueueEmail(EmailConfiguration emailConfiguration, EmailDetails emailDetails)
         {
+            ResponseModel responseModel = new ResponseModel();
+
             emailDetails.body = emailDetails.isHTML == 1 ? WebUtility.HtmlEncode(emailDetails.body) : emailDetails.body;
-            string str = $"INSERT INTO EmailNotification(Token,ToEmailIds,EmailSubject,EmailBody,HasAttachment,IsSent,CreatedDate,Status,IsHTML) VALUES('{emailDetails.token}','{emailDetails.ToEmailIds}','{emailDetails.subject}','{emailDetails.body}',0,0,GETDATE(),'A',{emailDetails.isHTML})";
-            await _miscDataSetting.ExecuteNonQuery(str);
-            await ClearEmailQueue(emailConfiguration);
-        }
-        public async Task ClearEmailQueue(EmailConfiguration emailConfiguration)
-        {
-            string? toEmailIds, subject, body, token = "";
-            Boolean isHTML = false;
-            string str = "Select ToEmailIds,EmailSubject,EmailBody,Token,IsHTML FROM EmailNotification WHERE IsSent = 0 AND Status='A' AND Len(Isnull(ToEmailIds,'')) > 0";
-            DataSet ds = await _miscDataSetting.GetDataSet(str);
-            if (ds != null)
+            try
             {
-                foreach (DataRow row in ds.Tables[0].Rows)
+                ArrayList arrList = new ArrayList();
+
+
+                DALOR.spArgumentsCollection(arrList, "p_flag", "C", "CHAR", "I", 1);
+                DALOR.spArgumentsCollection(arrList, "p_token", emailDetails.token ?? string.Empty, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_toemailids", emailDetails.ToEmailIds ?? string.Empty, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_subject", emailDetails.subject ?? string.Empty, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_body", emailDetails.body ?? string.Empty, "CLOB", "I");
+                DALOR.spArgumentsCollection(arrList, "p_hasattachment", emailDetails.hasAttachment ? "1" : "0", "NUMBER", "I");
+                DALOR.spArgumentsCollection(arrList, "p_issent", "0", "NUMBER", "I");
+                DALOR.spArgumentsCollection(arrList, "p_status", "A", "CHAR", "I", 1);
+                DALOR.spArgumentsCollection(arrList, "p_ishtml", emailDetails.isHTML.ToString(), "NUMBER", "I");
+
+                DALOR.spArgumentsCollection(arrList, "@ret", "", "NUMBER", "O");
+                DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O", 4000);
+                DALOR.spArgumentsCollection(arrList, "p_result", "", "REFCURSOR", "O");
+
+                var res = DALOR.RunStoredProcedureRetError("G_SP_GetSetEmailNotification", arrList);
+
+                responseModel.code = res.Ret;
+                responseModel.msg = res.ErrorMsg;
+
+                await ClearEmailQueue(emailConfiguration, emailDetails.token);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+
+        }
+        public async Task ClearEmailQueue(EmailConfiguration emailConfiguration, string token)
+        {
+
+            ResponseModel responseModel = new ResponseModel();
+
+            try
+            {
+                ArrayList arrList = new ArrayList();
+
+
+                DALOR.spArgumentsCollection(arrList, "p_flag", "G", "CHAR", "I", 1);
+                DALOR.spArgumentsCollection(arrList, "p_token", token, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_toemailids", string.Empty, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_subject", string.Empty, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_body", string.Empty, "CLOB", "I");
+                DALOR.spArgumentsCollection(arrList, "p_hasattachment", "0", "NUMBER", "I");
+                DALOR.spArgumentsCollection(arrList, "p_issent", "0", "NUMBER", "I");
+                DALOR.spArgumentsCollection(arrList, "p_status", "A", "CHAR", "I", 1);
+                DALOR.spArgumentsCollection(arrList, "p_ishtml", "0", "NUMBER", "I");
+
+                DALOR.spArgumentsCollection(arrList, "@ret", "", "NUMBER", "O");
+                DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O", 4000);
+                DALOR.spArgumentsCollection(arrList, "p_result", "", "REFCURSOR", "O");
+
+                DataSet ds = new DataSet();
+                var res = DALOR.RunStoredProcedureDsRetError("G_SP_GetSetEmailNotification", arrList, ds);
+
+                responseModel.code = res.Ret;
+                responseModel.msg = res.ErrorMsg;
+
+                if (res.Ret > 0)
                 {
-                    toEmailIds = row["ToEmailIds"].ToString();
-                    subject = row["EmailSubject"].ToString();
-                    body = row["EmailBody"].ToString();
-                    token = row["Token"].ToString();
-                    isHTML = Convert.ToBoolean(row["IsHTML"].ToString());
-                    body = isHTML ? WebUtility.HtmlDecode(body) : body;
-                     await SendEmail(emailConfiguration,toEmailIds, subject, body, token);
+                    string? toEmailIds, subject, body;
+                    Boolean isHTML = false;
+
+                    if (ds != null && ds.Tables.Count > 0)
+                    {
+                        foreach (DataRow row in ds.Tables[0].Rows)
+                        {
+                            toEmailIds = row["ToEmailIds"].ToString();
+                            subject = row["EmailSubject"].ToString();
+                            body = row["EmailBody"].ToString();
+
+                            isHTML = Convert.ToBoolean(row["IsHTML"].ToString() == "1");
+                            body = isHTML ? WebUtility.HtmlDecode(body) : body;
+                            await SendEmail(emailConfiguration, toEmailIds, subject, body, token);
+                        }
+                    }
                 }
+
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
         public async Task SendEmail(EmailConfiguration emailConfiguration, string toEmailIds, string subject, string body, string token = "")
@@ -111,9 +178,33 @@ namespace EmailService.Library
                 status = "S";
                 Console.WriteLine("Message sent.");
             }
-            string str = $"UPDATE EmailNotification SET IsSent = {isSent},SentDate=GETUTCDATE(),Status='{status}' WHERE Token = '{token}'";
-            MiscDataSetting miscDataSetting = new MiscDataSetting();
-            miscDataSetting.ExecuteNonQueryNonAsync(str);
+
+            try
+            {
+                ArrayList arrList = new ArrayList();
+
+
+                DALOR.spArgumentsCollection(arrList, "p_flag", "U", "CHAR", "I", 1);
+                DALOR.spArgumentsCollection(arrList, "p_token", token, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_toemailids", string.Empty, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_subject", string.Empty, "VARCHAR", "I");
+                DALOR.spArgumentsCollection(arrList, "p_body", string.Empty, "CLOB", "I");
+                DALOR.spArgumentsCollection(arrList, "p_hasattachment", "0", "NUMBER", "I");
+                DALOR.spArgumentsCollection(arrList, "p_issent", isSent.ToString(), "NUMBER", "I");
+                DALOR.spArgumentsCollection(arrList, "p_status", status, "CHAR", "I", 1);
+                DALOR.spArgumentsCollection(arrList, "p_ishtml", "0", "NUMBER", "I");
+
+                DALOR.spArgumentsCollection(arrList, "@ret", "", "NUMBER", "O");
+                DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O", 4000);
+                DALOR.spArgumentsCollection(arrList, "p_result", "", "REFCURSOR", "O");
+
+                var res = DALOR.RunStoredProcedureRetError("G_SP_GetSetEmailNotification", arrList);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+
             mailSent = true;
         }
 
@@ -129,14 +220,14 @@ namespace EmailService.Library
         //        var res = DAL.RunStoredProcedureRetError("sp_SetOTP", arrList);
 
 
-                
+
         //    }
         //    catch (Exception ex) 
         //    { 
-            
+
 
         //    }
-            
+
         //}
     }
 }

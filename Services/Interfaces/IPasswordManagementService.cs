@@ -1,5 +1,6 @@
 ﻿
 
+using AuthLibrary.Models;
 using ModelsLibrary.Models;
 using PasswordManagementLibrary.Models;
 
@@ -7,8 +8,8 @@ namespace Services.Interfaces
 {
     public interface IPasswordManagementService
     {
-        public Task<ResponseModel> SendForgotEmail(LoginReqModel lrm);
-        public Task<ResponseModel> ResetPassword(LoginReqModel lrm);
+        public Task<ResponseModel> SendForgotEmail(AuthRequestModel lrm, string webHostUrl);
+        public Task<ResponseModel> ResetPassword(AuthRequestModel auth);
 
         public Task<ResponseModel> ValidateResetPasswordToken(string token);
 

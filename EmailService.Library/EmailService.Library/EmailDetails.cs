@@ -12,6 +12,8 @@ namespace EmailService.Library
         public string? subject { get; set; } = "Testing email";
         public string? body { get; set; } = "Please Focus on your work";
         public string? token { get; set; } = Guid.NewGuid().ToString();
+        public bool hasAttachment { get; set; }
         public int isHTML { get; set; } = 1;
     }
+
 }

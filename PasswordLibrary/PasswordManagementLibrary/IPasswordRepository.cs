@@ -1,4 +1,5 @@
-﻿using ModelsLibrary.Models;
+﻿using AuthLibrary.Models;
+using ModelsLibrary.Models;
 using PasswordManagementLibrary.Models;
 
 
@@ -7,10 +8,10 @@ namespace PasswordManagementLibrary
     public interface IPasswordRepository
     {
 
-        public Task<ResponseModel> SendForgotPasswordEmail(LoginReqModel req, string userName, string applicationName);
-        public Task<ResponseModel> ResetPassword(LoginReqModel req);
+        public Task<ResponseModel> SendForgotPasswordEmail(AuthRequestModel req, string userName, string applicationName);
+        public Task<ResponseModel> ResetPassword(AuthRequestModel req);
 
-        public Task<ResponseModel> GeneratePasswordResetToken(LoginReqModel req);
+        public Task<ResponseModel> GeneratePasswordResetToken(AuthRequestModel req);
 
         public Task<ResponseModel> ValidateResetPasswordToken(string tokenHash);
 

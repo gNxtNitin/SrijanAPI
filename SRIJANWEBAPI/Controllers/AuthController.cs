@@ -123,6 +123,10 @@ namespace SRIJANWEBAPI.Controllers
             ResponseModel responseModel = new ResponseModel();
             try
             {
+                if(lrm.CompanyCode == null || lrm.CompanyCode <= 0)
+                {
+                    return BadRequest("Invalid CompanyCode!");
+                }
 
                 responseModel = await _userAuthService.AuthenticateUser(lrm);
                 
@@ -135,15 +139,15 @@ namespace SRIJANWEBAPI.Controllers
 
             }
         }
+
         [HttpPost("AuthenticateAdmin")]
         public async Task<IActionResult> AuthenticateAdmin([FromBody] AuthRequestModel lrm)
         {
             ResponseModel responseModel = new ResponseModel();
             try
             {
-                lrm.Password = PasswordConfig.GetMd5Hash(lrm.Password);
-                responseModel = await _userAuthService.Auth3(lrm);
-
+                lrm.CompanyCode = 0;
+                responseModel = await _userAuthService.AuthenticateUser(lrm);
                 return Ok(responseModel);
             }
             catch (Exception ex)
@@ -171,7 +175,7 @@ namespace SRIJANWEBAPI.Controllers
             }
         }
 
-        
+        [Authorize]
         [HttpGet("Me")]
         public async Task<IActionResult> Me(string uId)
         {
