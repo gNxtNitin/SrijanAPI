@@ -23,6 +23,11 @@ namespace Services.Implementation
             ResponseModel response = await _adminManagementService.GetCreateUpdateDeleteCity(crm);
             return response;
         }
+        public async Task<ResponseModel> GetDashboardCharts(string cid1)
+        {
+            ResponseModel response = await _adminManagementService.GetDashboardCharts(cid1);
+            return response;
+        }
         public async Task<ResponseModel> GetData(string flag, string cid1)
         {
             ResponseModel response = await _adminManagementService.GetData(flag, cid1);

@@ -14,6 +14,59 @@ namespace MobilePortalManagementLibrary.Implementation
 {
     public class AdminManagementService : IAdminManagementService
     {
+        public async Task<ResponseModel> GetDashboardCharts(string cid1)
+        {
+            ResponseModel responseModal = new ResponseModel();
+
+            ArrayList arrList = new ArrayList();
+
+            try
+            {
+                DALOR.spArgumentsCollection(arrList, "p_emp_id", cid1, "VARCHAR", "I", 20);
+
+                //DALOR.spArgumentsCollection(arrList, "p_Data1", cid1 ?? "string", "VARCHAR", "I");
+
+
+                DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");
+
+                DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O", 4000);
+                DALOR.spArgumentsCollection(arrList, "o_metric_cards", "", "REFCURSOR", "O");
+                DALOR.spArgumentsCollection(arrList, "o_da_chart", "", "REFCURSOR", "O");
+                DALOR.spArgumentsCollection(arrList, "o_zonewiseschool_chart", "", "REFCURSOR", "O");
+
+
+                DataSet ds = new DataSet();
+                var res = DALOR.RunStoredProcedureDsRetError("G_SP_GET_ADMINDASHBOARD_DATA", arrList, ds);
+
+                responseModal.code = res.Ret;
+                responseModal.msg = res.ErrorMsg;
+
+                if (res.Ret > 0 && ds != null && ds.Tables.Count > 0)
+                {
+                    List<string> l1 = new List<string>();
+                    l1.Add(JsonConvert.SerializeObject(ds.Tables[0]));
+                    l1.Add(JsonConvert.SerializeObject(ds.Tables[1]));
+                    l1.Add(JsonConvert.SerializeObject(ds.Tables[2]));
+
+                    responseModal.data = JsonConvert.SerializeObject(l1);
+
+
+
+                }
+                else
+                {
+                    responseModal.data = string.Empty;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseModal.code = -1;
+                responseModal.msg = "Error Occurred, Could Not Get Details";
+                responseModal.data = string.Empty;
+            }
+
+            return responseModal;
+        }
         public async Task<ResponseModel> GetData(string flag, string cid1)
         {
             ResponseModel responseModal = new ResponseModel();
@@ -38,7 +91,7 @@ namespace MobilePortalManagementLibrary.Implementation
                 //DALOR.spArgumentsCollection(arrList, "g_ResultSet", "", "REFCURSOR", "O");
 
                 DataSet ds = new DataSet();
-                var res = DALOR.RunStoredProcedureDsRetError("sp2_GetData", arrList, ds);
+                var res = DALOR.RunStoredProcedureDsRetError("sp_GetData", arrList, ds);
 
                 responseModal.code = res.Ret;
                 responseModal.msg = res.ErrorMsg;
@@ -321,7 +374,7 @@ namespace MobilePortalManagementLibrary.Implementation
                     DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");
                     DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O");
                     DALOR.spArgumentsCollection(arrList, "g_ResultSet", "", "REFCURSOR", "O");
-                    var res = DALOR.RunStoredProcedureDsRetError("sp2_GetCreateSetDeleteEmployees", arrList);
+                    var res = DALOR.RunStoredProcedureDsRetError("sp_GetCreateSetDeleteEmployees", arrList);
                     response.code = res.Ret;
                     response.msg = res.ErrorMsg;
                 }
@@ -358,7 +411,7 @@ namespace MobilePortalManagementLibrary.Implementation
                     DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");
                     DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O");
                     DALOR.spArgumentsCollection(arrList, "g_ResultSet", "", "REFCURSOR", "O");
-                    var res = DALOR.RunStoredProcedureDsRetError("sp2_GetCreateSetDeleteEmployees", arrList, ds);
+                    var res = DALOR.RunStoredProcedureDsRetError("sp_GetCreateSetDeleteEmployees", arrList, ds);
                     response.code = res.Ret;
                     response.msg = res.ErrorMsg;
 

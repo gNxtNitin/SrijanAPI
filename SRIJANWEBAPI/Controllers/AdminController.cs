@@ -18,16 +18,32 @@ namespace SRIJANWEBAPI.Controllers
         {
             _adminService = adminService;
         }
+        [HttpGet("GetDashboardCharts")]
+        public async Task<IActionResult> GetDashboardCharts(string cid1)
+        {
+            try
+            {
+                ResponseModel response = await _adminService.GetDashboardCharts(cid1);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                //await _errorLoggingService.LogError(ex, ControllerContext.ActionDescriptor.ControllerName, ControllerContext.ActionDescriptor.ActionName);
+                return StatusCode(500, new { Message = ex.Message, StatusCode = 500 });
+
+            }
+        }
         [HttpGet("GetAllZones")]
         public async Task<IActionResult> GetAllZones()
         {
             try
             {
-                ZoneRequestModel zrm = new ZoneRequestModel {
+                ZoneRequestModel zrm = new ZoneRequestModel
+                {
                     flag = "G"
                 };
-                    
-                    
+
+
                 ResponseModel response = await _adminService.GetCreateUpdateDeleteZone(zrm);
                 return Ok(response);
             }
@@ -92,7 +108,7 @@ namespace SRIJANWEBAPI.Controllers
             }
         }
 
-        
+
         [HttpGet("GetAllSchool")]
         public async Task<IActionResult> GetAllSchool(string cid1)
         {

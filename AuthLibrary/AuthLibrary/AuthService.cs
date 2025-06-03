@@ -278,7 +278,7 @@ namespace AuthLibrary
                         DALOR.spArgumentsCollection(arrList, "@ret", "", "VARCHAR", "O");
                         DALOR.spArgumentsCollection(arrList, "@errormsg", "", "VARCHAR", "O", 4000);
                         DALOR.spArgumentsCollection(arrList, "p_result", "", "REFCURSOR", "O");
-                        var res = DALOR.RunStoredProcedureDsRetError("G2_SP_GetAuthenticatedUser", arrList, ds);
+                        var res = DALOR.RunStoredProcedureDsRetError("G_SP_GetAuthenticatedUser", arrList, ds);
 
 
                         if (res.Ret > 0)

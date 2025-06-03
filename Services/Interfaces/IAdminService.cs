@@ -9,6 +9,7 @@ namespace Services.Interfaces
 {
     public interface IAdminService
     {
+        Task<ResponseModel> GetDashboardCharts(string cid1);
         Task<ResponseModel> GetCreateUpdateDeleteZone(ZoneRequestModel zrm);
         Task<ResponseModel> GetCreateUpdateDeleteCity(CityRequestModel crm);
         Task<ResponseModel> GetData(string flag, string cid1);
