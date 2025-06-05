@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Services.Implementation;
 using Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using SRIJANWEBAPI.Utility;
+using Microsoft.IdentityModel.Tokens;
 
 namespace SRIJANWEBAPI.Controllers
 {
@@ -14,6 +16,7 @@ namespace SRIJANWEBAPI.Controllers
     public class AdminController : ControllerBase
     {
         private readonly IAdminService _adminService;
+        private readonly EncryptDecryptClass encDcService = new EncryptDecryptClass();
         public AdminController(IAdminService adminService)
         {
             _adminService = adminService;
@@ -173,6 +176,11 @@ namespace SRIJANWEBAPI.Controllers
         {
             try
             {
+                if(!string.IsNullOrEmpty(erm.Password))
+                {
+                    erm.Password = await encDcService.Encrypt(erm.Password);
+                }
+                
                 //List<Menu> menuList = new List<Menu>();
                 var res = await _adminService.GetCreateUpdateDeleteEmployees(erm);
                 return Ok(res);

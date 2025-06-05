@@ -14,6 +14,7 @@ namespace MobilePortalManagementLibrary.Implementation
 {
     public class AdminManagementService : IAdminManagementService
     {
+
         public async Task<ResponseModel> GetDashboardCharts(string cid1)
         {
             ResponseModel responseModal = new ResponseModel();
@@ -343,7 +344,7 @@ namespace MobilePortalManagementLibrary.Implementation
                 ArrayList arrList = new ArrayList();
                 if (erm.flag != "G")
                 {
-
+                    
                     DALOR.spArgumentsCollection(arrList, "@p_flag", erm.flag, "Char", "I", 1);
                     //DALOR.spArgumentsCollection(arrList, "p_Sno", erm.Sno ?? "", "VARCHAR", "I");
                     //DALOR.spArgumentsCollection(arrList, "p_Zone", erm.Zone, "NUMBER", "I");
