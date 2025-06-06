@@ -51,7 +51,7 @@ namespace AuthLibrary
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    Expires = DateTime.UtcNow.AddMinutes(30),
+                    //Expires = DateTime.UtcNow.AddMinutes(30),
                     //Expires = DateTime.UtcNow.AddDays(10),
                     Issuer = _configuration["Jwt:Issuer"],
                     Audience = _configuration["Jwt:Audience"],
