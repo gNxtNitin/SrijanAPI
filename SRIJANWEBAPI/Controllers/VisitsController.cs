@@ -8,9 +8,11 @@ namespace SRIJANWEBAPI.Controllers
     public class VisitsController : ControllerBase
     {
         private readonly IVisitService _visitService;
-        public VisitsController(IVisitService visitService)
+        private readonly IApiAuditService _apiAuditService;
+        public VisitsController(IVisitService visitService, IApiAuditService apiAuditService)
         {
             _visitService = visitService;
+            _apiAuditService = apiAuditService;
         }
 
         [HttpGet("GetVisitReportData")]

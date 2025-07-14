@@ -5,12 +5,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
 using MobilePortalManagementLibrary.Models;
+using Newtonsoft.Json;
 using Services.Interfaces;
 using SRIJANWEBAPI.Models;
 
 namespace SRIJANWEBAPI.Controllers
 {
-    [Authorize(Roles = "ADMIN,INCHARGE,HOD,USER")]
+    //[Authorize(Roles = "ADMIN,INCHARGE,HOD,USER")]
     [Route("api/[controller]")]
     [ApiController]
     public class DAController : ControllerBase
@@ -18,10 +19,12 @@ namespace SRIJANWEBAPI.Controllers
         private readonly IDAService _dAService;
         private readonly IOptions<FileSettings> _fileSettings;
         private string _daFilesPath;
-        public DAController(IDAService dAService, IOptions<FileSettings> fileSettings)
+        private readonly IApiAuditService _apiAuditService;
+        public DAController(IDAService dAService, IOptions<FileSettings> fileSettings, IApiAuditService apiAuditService)
         {
             _dAService = dAService;
             _fileSettings = fileSettings;
+            _apiAuditService = apiAuditService;
         }
 
         [HttpGet("GetDAReportData")]
@@ -63,6 +66,11 @@ namespace SRIJANWEBAPI.Controllers
         {
             try
             {
+                var audit = new ResponseModel();
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("C", model.EmpId, HttpContext.Request.Path, 0, JsonConvert.SerializeObject(model));
+                }
                 if (string.IsNullOrWhiteSpace(model.EmpId))
                     return BadRequest(new { Message = "EmpID is required." });
                 var fileNames = await ProcessDAFilesAsync(model);
@@ -81,6 +89,10 @@ namespace SRIJANWEBAPI.Controllers
                 };
 
                 var response = await _dAService.AddDARecord(daRequest);
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("U", model.EmpId, HttpContext.Request.Path, audit.code, JsonConvert.SerializeObject(response));
+                }
                 return Ok(response);
             }
             catch (Exception ex)
@@ -153,12 +165,21 @@ namespace SRIJANWEBAPI.Controllers
         {
             try
             {
-                if(string.IsNullOrEmpty(dAApproveRejectReq.DAID) || string.IsNullOrEmpty(dAApproveRejectReq.ARBy) || string.IsNullOrEmpty(dAApproveRejectReq.DAEmpId))
+                var audit = new ResponseModel();
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("C", dAApproveRejectReq.ARBy, HttpContext.Request.Path, 0, JsonConvert.SerializeObject(dAApproveRejectReq));
+                }
+                if (string.IsNullOrEmpty(dAApproveRejectReq.DAID) || string.IsNullOrEmpty(dAApproveRejectReq.ARBy) || string.IsNullOrEmpty(dAApproveRejectReq.DAEmpId))
                 {
                     return BadRequest("Invalid DA Approve/Reject Request! Data is Invalid");
                 }
 
                 var response = await _dAService.ApproveRejectDA(dAApproveRejectReq);
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("U", dAApproveRejectReq.ARBy, HttpContext.Request.Path, audit.code, JsonConvert.SerializeObject(response));
+                }
                 return Ok(response);
             }
             catch (Exception ex)
@@ -174,6 +195,11 @@ namespace SRIJANWEBAPI.Controllers
         {
             try
             {
+                var audit = new ResponseModel();
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("C", dAApproveRejectReq.Count != 0 ?  dAApproveRejectReq[0].ARBy : "EmptyList", HttpContext.Request.Path, 0, JsonConvert.SerializeObject(dAApproveRejectReq));
+                }
                 if (dAApproveRejectReq == null || !dAApproveRejectReq.Any())
                 {
                     return BadRequest("Request list cannot be null or empty.");
@@ -215,7 +241,10 @@ namespace SRIJANWEBAPI.Controllers
                         FailureCount = results.Count(r => r <= 0)
                     }
                 };
-
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("U", dAApproveRejectReq.Count != 0 ? dAApproveRejectReq[0].ARBy : "EmptyList", HttpContext.Request.Path, audit.code, JsonConvert.SerializeObject(resultSummary));
+                }
                 return Ok(resultSummary);
             }
             catch (Exception ex)

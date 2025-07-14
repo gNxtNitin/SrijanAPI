@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MobilePortalManagementLibrary.Models;
+using Newtonsoft.Json;
 using Services.Interfaces;
+using SRIJANWEBAPI.Models;
 
 namespace SRIJANWEBAPI.Controllers
 {
@@ -12,9 +14,11 @@ namespace SRIJANWEBAPI.Controllers
     public class UserController : ControllerBase
     {
         private readonly IAdminService _adminService;
-        public UserController(IAdminService adminService)
+        private readonly IApiAuditService _apiAuditService;
+        public UserController(IAdminService adminService, IApiAuditService apiAuditService)
         {
             _adminService = adminService;
+            _apiAuditService = apiAuditService;
         }
         [HttpGet("GetAllSchool")]
         public async Task<IActionResult> GetAllSchool(string cid1)
@@ -62,7 +66,16 @@ namespace SRIJANWEBAPI.Controllers
             try
             {
                 //List<Menu> menuList = new List<Menu>();
+                var audit = new ResponseModel();
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("C", "NonAdmin", HttpContext.Request.Path, 0, JsonConvert.SerializeObject(srm));
+                }
                 var res = await _adminService.GetCreateUpdateDeleteSchool(srm);
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("U", "NonAdmin", HttpContext.Request.Path, audit.code, JsonConvert.SerializeObject(res));
+                }
                 return Ok(res);
             }
             catch (Exception ex)

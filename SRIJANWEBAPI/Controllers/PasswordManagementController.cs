@@ -15,11 +15,13 @@ namespace SRIJANWEBAPI.Controllers
         private readonly IErrorLoggingService _errorLoggingService;
         private readonly IPasswordManagementService _passwordManagementService;
         private readonly IConfiguration _configuration;
-        public PasswordManagementController(IErrorLoggingService errorLoggingService, IPasswordManagementService passwordManagementService, IConfiguration configuration)
+        private readonly IApiAuditService _apiAuditService;
+        public PasswordManagementController(IErrorLoggingService errorLoggingService, IPasswordManagementService passwordManagementService, IConfiguration configuration,IApiAuditService apiAuditService)
         {
             _errorLoggingService = errorLoggingService;
             _passwordManagementService = passwordManagementService;
             _configuration = configuration;
+            _apiAuditService = apiAuditService;
         }
 
 

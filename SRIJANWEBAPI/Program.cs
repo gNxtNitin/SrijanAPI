@@ -1,26 +1,26 @@
-using AuthLibrary.Interface;
 using AuthLibrary;
-using Services.Interfaces;
-using Services.Implementation;
-using ErrorAndExceptionHandling.Library;
-using UserManagementLibrary.Interfaces;
-using UserManagementLibrary;
+using AuthLibrary.Interface;
 //using DatabaseManager;
 using CustomerManagementLibrary;
-using PasswordManagementLibrary;
+using DatabaseManager;
 using EmailService.Library;
+using ErrorAndExceptionHandling.Library;
 using MenuManagementLib;
-using RoleManagementLibrary;
-using NotificationPreferenceLib.Interface;
-using NotificationPreferenceLib;
-using NotificationSenderLib;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-
-using MobilePortalManagementLibrary.Interface;
 using MobilePortalManagementLibrary.Implementation;
+using MobilePortalManagementLibrary.Interface;
+using NotificationPreferenceLib;
+using NotificationPreferenceLib.Interface;
+using NotificationSenderLib;
+using PasswordManagementLibrary;
+using RoleManagementLibrary;
+using Services.Implementation;
+using Services.Interfaces;
 using SRIJANWEBAPI;
-using DatabaseManager;
+using SRIJANWEBAPI.Models;
+using UserManagementLibrary;
+using UserManagementLibrary.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +52,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 DALOR.dbConnStr = builder.Configuration.GetConnectionString("DefaultConnection");
+ApiAuditSettings.EnableAudit = builder.Configuration.GetValue<bool>("ApiAudit:EnableAudit");
 //builder.Services.AddScoped<IAuthorizationHandler, FeatureAccessRequirementHandler>();
 
 builder.Services.AddScoped<IUserAuthService, UserAuthService>();//Services
@@ -79,6 +80,8 @@ builder.Services.AddScoped<IPunchingManagementService, PunchingManagementService
 builder.Services.AddScoped<IDAService, DAService>();
 builder.Services.AddScoped<IVisitService, VisitService>();
 builder.Services.AddScoped<IPunchingService, PunchingService>();
+builder.Services.AddScoped<IApiAuditManagement, ApiAuditManagement>();
+builder.Services.AddScoped<IApiAuditService, ApiAuditService>();
 
 
 builder.Services.AddScoped<IErrorLoggingService>(sp =>
@@ -97,7 +100,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();

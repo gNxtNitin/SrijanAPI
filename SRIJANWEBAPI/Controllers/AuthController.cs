@@ -1,19 +1,21 @@
 ﻿using AuthLibrary.Models;
+using DatabaseManager;
 using ErrorAndExceptionHandling.Library;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+//using MobilePortalManagementLibrary.Models;
 using ModelsLibrary.Models;
+using Newtonsoft.Json;
+using NotificationSenderLib.Models;
+using Oracle.ManagedDataAccess.Client;
 using Services.Implementation;
 using Services.Interfaces;
-using DatabaseManager;
-using System.Data.OleDb;
-using System.Collections;
-using System.Data;
-using Oracle.ManagedDataAccess.Client;
-using NotificationSenderLib.Models;
 using SRIJANWEBAPI.Models;
 using SRIJANWEBAPI.Utility;
+using System.Collections;
+using System.Data;
+using System.Data.OleDb;
 //using Oracle.ManagedDataAccess.Client;
 //using Dapper;
 //using Dapper.Oracle;
@@ -143,6 +145,7 @@ namespace SRIJANWEBAPI.Controllers
         [HttpPost("AuthenticateAdmin")]
         public async Task<IActionResult> AuthenticateAdmin([FromBody] AuthRequestModel lrm)
         {
+            
             ResponseModel responseModel = new ResponseModel();
             try
             {
@@ -175,10 +178,11 @@ namespace SRIJANWEBAPI.Controllers
             }
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("Me")]
         public async Task<IActionResult> Me(string uId)
         {
+            //var qq = ApiAuditSettings.EnableAudit;
             ResponseModel responseModel = new ResponseModel();
             try
             {

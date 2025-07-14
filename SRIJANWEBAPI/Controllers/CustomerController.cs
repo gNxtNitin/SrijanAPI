@@ -14,9 +14,11 @@ namespace SRIJANWEBAPI.Controllers
     public class CustomerController : ControllerBase
     {
         private readonly ICustomerService _customerService;
-        public CustomerController(ICustomerService customerService)
+        private readonly IApiAuditService _apiAuditService;
+        public CustomerController(ICustomerService customerService, IApiAuditService apiAuditService)
         {
             _customerService = customerService;
+            _apiAuditService = apiAuditService;
         }
 
         [AllowAnonymous]

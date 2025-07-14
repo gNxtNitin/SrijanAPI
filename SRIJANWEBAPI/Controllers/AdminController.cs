@@ -1,12 +1,15 @@
-﻿using MobilePortalManagementLibrary.Models;
+﻿using Microsoft.AspNetCore.Authorization;
 //using CustomerManagementLibrary.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using MobilePortalManagementLibrary.Models;
+using Newtonsoft.Json;
 using Services.Implementation;
 using Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
+using SRIJANWEBAPI.Models;
 using SRIJANWEBAPI.Utility;
-using Microsoft.IdentityModel.Tokens;
+using Twilio.TwiML.Voice;
 
 namespace SRIJANWEBAPI.Controllers
 {
@@ -17,9 +20,11 @@ namespace SRIJANWEBAPI.Controllers
     {
         private readonly IAdminService _adminService;
         private readonly EncryptDecryptClass encDcService = new EncryptDecryptClass();
-        public AdminController(IAdminService adminService)
+        private readonly IApiAuditService _apiAuditService;
+        public AdminController(IAdminService adminService, IApiAuditService apiAuditService)
         {
             _adminService = adminService;
+            _apiAuditService = apiAuditService;
         }
         [HttpGet("GetDashboardCharts")]
         public async Task<IActionResult> GetDashboardCharts(string cid1)
@@ -62,8 +67,17 @@ namespace SRIJANWEBAPI.Controllers
         {
             try
             {
+                var audit = new ResponseModel();
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("C", "ADMIN", HttpContext.Request.Path, 0, JsonConvert.SerializeObject(zrm));
+                }
                 //List<Menu> menuList = new List<Menu>();
                 var res = await _adminService.GetCreateUpdateDeleteZone(zrm);
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("U", "ADMIN", HttpContext.Request.Path, audit.code, JsonConvert.SerializeObject(res));
+                }
                 return Ok(res);
             }
             catch (Exception ex)
@@ -99,8 +113,17 @@ namespace SRIJANWEBAPI.Controllers
         {
             try
             {
+                var audit = new ResponseModel();
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("C", "ADMIN", HttpContext.Request.Path, 0, JsonConvert.SerializeObject(crm));
+                }
                 //List<Menu> menuList = new List<Menu>();
                 var res = await _adminService.GetCreateUpdateDeleteCity(crm);
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("U", "ADMIN", HttpContext.Request.Path, audit.code, JsonConvert.SerializeObject(res));
+                }
                 return Ok(res);
             }
             catch (Exception ex)
@@ -139,8 +162,17 @@ namespace SRIJANWEBAPI.Controllers
         {
             try
             {
+                var audit = new ResponseModel();
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("C", "ADMIN", HttpContext.Request.Path, 0, JsonConvert.SerializeObject(srm));
+                }
                 //List<Menu> menuList = new List<Menu>();
                 var res = await _adminService.GetCreateUpdateDeleteSchool(srm);
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("U", "ADMIN", HttpContext.Request.Path, audit.code, JsonConvert.SerializeObject(res));
+                }
                 return Ok(res);
             }
             catch (Exception ex)
@@ -176,13 +208,22 @@ namespace SRIJANWEBAPI.Controllers
         {
             try
             {
-                if(!string.IsNullOrEmpty(erm.Password))
+                var audit = new ResponseModel();
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("C", "ADMIN", HttpContext.Request.Path, 0, JsonConvert.SerializeObject(erm));
+                }
+                if (!string.IsNullOrEmpty(erm.Password))
                 {
                     erm.Password = await encDcService.Encrypt(erm.Password);
                 }
                 
                 //List<Menu> menuList = new List<Menu>();
                 var res = await _adminService.GetCreateUpdateDeleteEmployees(erm);
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("U", "ADMIN", HttpContext.Request.Path, audit.code, JsonConvert.SerializeObject(res));
+                }
                 return Ok(res);
             }
             catch (Exception ex)
@@ -218,8 +259,16 @@ namespace SRIJANWEBAPI.Controllers
         {
             try
             {
-                //List<Menu> menuList = new List<Menu>();
+                var audit = new ResponseModel();
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("C", "ADMIN", HttpContext.Request.Path, 0, JsonConvert.SerializeObject(srm));
+                }
                 var res = await _adminService.AssignSchoolIncharge(srm);
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("U", "ADMIN", HttpContext.Request.Path, audit.code, JsonConvert.SerializeObject(res));
+                }
                 return Ok(res);
             }
             catch (Exception ex)

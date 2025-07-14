@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
 using MobilePortalManagementLibrary.Models;
+using Newtonsoft.Json;
 using Services.Interfaces;
 using SRIJANWEBAPI.Models;
 
 namespace SRIJANWEBAPI.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class PunchingController : ControllerBase
@@ -16,10 +17,12 @@ namespace SRIJANWEBAPI.Controllers
         private readonly IPunchingService _punchingService;
         private readonly IOptions<FileSettings> _fileSettings;
         private string _ePunchFilesPath;
-        public PunchingController(IPunchingService punchingService, IOptions<FileSettings> fileSettings)
+        private readonly IApiAuditService _apiAuditService;
+        public PunchingController(IPunchingService punchingService, IOptions<FileSettings> fileSettings, IApiAuditService apiAuditService)
         {
             _punchingService = punchingService;
             _fileSettings = fileSettings;
+            _apiAuditService = apiAuditService;
         }
 
         [HttpGet("GetPunchingReportData")]
@@ -57,9 +60,15 @@ namespace SRIJANWEBAPI.Controllers
         [HttpPost("AddEpunchRecord")]
         public async Task<IActionResult> AddEpunchRecord([FromForm] EpunchModel ePunchModel)
         {
+
             try
             {
-               
+                var audit = new ResponseModel();
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    audit = await _apiAuditService.CreateUpdateApiAudit("C", ePunchModel.EmpID, HttpContext.Request.Path, 0, JsonConvert.SerializeObject(ePunchModel));
+                }
+
                 if (string.IsNullOrWhiteSpace(ePunchModel.EmpID))
                     return BadRequest(new { Message = "EmpID is required." });
 
@@ -104,6 +113,12 @@ namespace SRIJANWEBAPI.Controllers
 
                 var response = await _punchingService.AddEpunchRecord(ePunchRequestModel);
 
+                //var audit = new ResponseModel();
+                if (ApiAuditSettings.EnableAudit)
+                {
+                    
+                    audit = await _apiAuditService.CreateUpdateApiAudit("U", ePunchModel.EmpID, HttpContext.Request.Path, audit.code, JsonConvert.SerializeObject(response));
+                }
                 return Ok(response);
             }
             catch (Exception ex)
